@@ -1,0 +1,7 @@
+*.sln
+x64/
+*.vcxproj
+*.filters
+*.user
+CoursePr.ecc74d69/
+.vs/
