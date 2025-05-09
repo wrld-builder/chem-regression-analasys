@@ -19,7 +19,8 @@ class ResultWindow {
    * \param disp Дисперсия.
    * \param r Коэффициент корреляции.
    */
-  static void Show(HWND hwndParent, double n, double k, double disp, double r);
+  static void Show(HWND hParent, double n, double k, double disp, double r,
+                   double A, double Ea);
 
   /// Статическая оконная процедура для окна результатов.
   static LRESULT CALLBACK StaticWndProc(HWND hwnd, UINT msg, WPARAM wParam,

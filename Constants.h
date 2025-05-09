@@ -9,17 +9,17 @@
 /**
  * \brief Идентификатор для поля ввода количества точек.
  */
-constexpr int IDC_POINTS_EDIT = 101;
+constexpr INT_PTR IDC_POINTS_EDIT = 101;
 
 /**
  * \brief Идентификатор для поля ввода концентрации Cb.
  */
-constexpr int IDC_CONC_CB_EDIT = 102;
+constexpr INT_PTR IDC_CONC_CB_EDIT = 102;
 
 /**
  * \brief Идентификатор для поля ввода концентрации Cc.
  */
-constexpr int IDC_CONC_CC_EDIT = 103;
+constexpr INT_PTR IDC_CONC_CC_EDIT = 103;
 
 /**
  * \brief Идентификатор кнопки «Графики».
@@ -55,34 +55,38 @@ constexpr wchar_t CLASSNAME_RESULT[] = L"ResultWindowClass";
  * \brief Идентификатор статического текста для отображения надписи «Порядок
  * реакции (n)».
  */
-constexpr int IDC_STATIC_RESULT1 = 401;
+constexpr INT_PTR IDC_STATIC_RESULT1 = 401;
 
 /**
  * \brief Идентификатор статического текста для отображения надписи «Константа
  * скорости (k)».
  */
-constexpr int IDC_STATIC_RESULT2 = 402;
+constexpr INT_PTR IDC_STATIC_RESULT2 = 402;
 
 /**
  * \brief Идентификатор статического текста для отображения надписи «Дисперсия».
  */
-constexpr int IDC_STATIC_RESULT3 = 403;
+constexpr INT_PTR IDC_STATIC_RESULT3 = 403;
 
 /**
  * \brief Идентификатор статического текста для отображения надписи
  * «Корреляция».
  */
-constexpr int IDC_STATIC_RESULT4 = 404;
+constexpr INT_PTR IDC_STATIC_RESULT4 = 404;
+
+constexpr INT_PTR IDC_STATIC_RESULT_A = 405;
+
+constexpr INT_PTR IDC_STATIC_RESULT_EA = 406;
 
 /**
  * \brief Идентификатор кнопки OK в окне результатов.
  */
-constexpr int IDC_BUTTON_OK = 405;
+constexpr INT_PTR IDC_BUTTON_OK = 405;
 
 /**
  * \brief Идентификатор метки для отображения координат на графике.
  */
-constexpr int IDC_COORD_LABEL = 999;
+constexpr INT_PTR IDC_COORD_LABEL = 999;
 
 //----------------------------------------------------------------------
 // Если вы используете отдельные идентификаторы для полей EDIT
@@ -92,21 +96,25 @@ constexpr int IDC_COORD_LABEL = 999;
 /**
  * \brief Идентификатор поля EDIT для вывода n (порядка реакции).
  */
-constexpr int IDC_EDIT_RESULT_N = 501;
+constexpr INT_PTR IDC_EDIT_RESULT_N = 501;
 
 /**
  * \brief Идентификатор поля EDIT для вывода k (константы скорости).
  */
-constexpr int IDC_EDIT_RESULT_K = 502;
+constexpr INT_PTR IDC_EDIT_RESULT_K = 502;
 
 /**
  * \brief Идентификатор поля EDIT для вывода дисперсии.
  */
-constexpr int IDC_EDIT_RESULT_D = 503;
+constexpr INT_PTR IDC_EDIT_RESULT_D = 503;
 
 /**
  * \brief Идентификатор поля EDIT для вывода коэффициента корреляции.
  */
-constexpr int IDC_EDIT_RESULT_R = 504;
+constexpr INT_PTR IDC_EDIT_RESULT_R = 504;
+
+constexpr INT_PTR IDC_EDIT_RESULT_A = 505;
+
+constexpr INT_PTR IDC_EDIT_RESULT_EA = 506;
 
 #endif  // CONSTANTS_H

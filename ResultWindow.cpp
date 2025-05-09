@@ -2,51 +2,45 @@
  * \file ResultWindow.cpp
  * \brief Реализация окна для отображения результатов расчёта.
  *
- * Данный файл содержит реализацию класса \c ResultWindow, который отвечает за создание
- * и управление окном для вывода результатов расчёта: порядка реакции (n), константы скорости (k),
- * дисперсии и коэффициента корреляции.
+ * Данный файл содержит реализацию класса \c ResultWindow, который теперь
+ * выводит:
+ * - Порядок реакции (n)
+ * - Константу скорости (k)
+ * - Дисперсию
+ * - Коэффициент корреляции (r)
+ * - Предэкспоненциальный коэффициент (A)
+ * - Энергию активации (Ea, Дж/моль)
  *
  * \author Шунин Михаил Дмитриевич
  * \date Февраль 2025
  */
 
 #include "ResultWindow.h"
+
 #include <windowsx.h>
+
 #include <cwchar>
+
 #include "Constants.h"
 
-/**
- * \brief Глобальный дескриптор окна результатов.
- *
- * Используется для контроля существования окна результатов и предотвращения его
- * множественного создания.
- */
+// Глобальный дескриптор окна результатов.
 static HWND g_hResWnd = nullptr;
-
 
 /**
  * \brief Статическая оконная процедура для окна результатов.
  *
- * Функция обрабатывает сообщения, поступающие в окно результатов, и выполняет следующие задачи:
- * - При получении сообщения \c WM_CREATE создаёт все дочерние элементы управления:
- *   - Статические надписи (лейблы) для подписи каждого результата.
- *   - Поля \c EDIT для отображения рассчитанных значений (только для чтения).
- *   - Кнопку "OK" для закрытия окна.
- * - Обрабатывает сообщение \c WM_COMMAND для закрытия окна при нажатии кнопки "OK".
- * - Обрабатывает сообщения \c WM_CLOSE и \c WM_DESTROY для корректного завершения работы окна.
- *
- * \param hwnd Дескриптор окна.
- * \param msg Код сообщения.
- * \param wParam Дополнительная информация о сообщении (например, идентификатор элемента управления).
- * \param lParam Дополнительная информация о сообщении.
- * \return Результат обработки сообщения.
+ * Обрабатывает создание элементов управления, кнопку OK, а также сообщения
+ * закрытия окна.
  */
-LRESULT CALLBACK ResultWindow::StaticWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
-  // Статические переменные для хранения дескрипторов полей EDIT, в которых отображаются результаты.
+LRESULT CALLBACK ResultWindow::StaticWndProc(HWND hwnd, UINT msg, WPARAM wParam,
+                                             LPARAM lParam) {
+  // Статические дескрипторы полей, в которых будут отображаться результаты.
   static HWND hEdN = nullptr;
   static HWND hEdK = nullptr;
   static HWND hEdD = nullptr;
   static HWND hEdR = nullptr;
+  static HWND hEdA = nullptr;
+  static HWND hEdEa = nullptr;
 
   switch (msg) {
     case WM_CREATE: {
@@ -54,62 +48,72 @@ LRESULT CALLBACK ResultWindow::StaticWndProc(HWND hwnd, UINT msg, WPARAM wParam,
 
       // === Порядок реакции (n) ===
       CreateWindowEx(0, L"STATIC", L"Порядок реакции (n):",
-                     WS_CHILD | WS_VISIBLE, 20, 20, 180, 20, hwnd,
+                     WS_CHILD | WS_VISIBLE, 20, 20, 200, 20, hwnd,
                      (HMENU)IDC_STATIC_RESULT1, nullptr, nullptr);
-
       hEdN = CreateWindowEx(
           WS_EX_CLIENTEDGE, L"EDIT", L"", WS_CHILD | WS_VISIBLE | ES_READONLY,
-          220, 20, 140, 20, hwnd, (HMENU)IDC_EDIT_RESULT_N, nullptr, nullptr);
+          230, 20, 140, 20, hwnd, (HMENU)IDC_EDIT_RESULT_N, nullptr, nullptr);
 
       // === Константа скорости (k) ===
       CreateWindowEx(0, L"STATIC", L"Константа скорости (k):",
-                     WS_CHILD | WS_VISIBLE, 20, 60, 180, 20, hwnd,
+                     WS_CHILD | WS_VISIBLE, 20, 60, 200, 20, hwnd,
                      (HMENU)IDC_STATIC_RESULT2, nullptr, nullptr);
-
       hEdK = CreateWindowEx(
           WS_EX_CLIENTEDGE, L"EDIT", L"", WS_CHILD | WS_VISIBLE | ES_READONLY,
-          220, 60, 140, 20, hwnd, (HMENU)IDC_EDIT_RESULT_K, nullptr, nullptr);
+          230, 60, 140, 20, hwnd, (HMENU)IDC_EDIT_RESULT_K, nullptr, nullptr);
 
       // === Дисперсия ===
       CreateWindowEx(0, L"STATIC", L"Дисперсия:", WS_CHILD | WS_VISIBLE, 20,
-                     100, 180, 20, hwnd, (HMENU)IDC_STATIC_RESULT3, nullptr,
+                     100, 200, 20, hwnd, (HMENU)IDC_STATIC_RESULT3, nullptr,
                      nullptr);
-
       hEdD = CreateWindowEx(
           WS_EX_CLIENTEDGE, L"EDIT", L"", WS_CHILD | WS_VISIBLE | ES_READONLY,
-          220, 100, 140, 20, hwnd, (HMENU)IDC_EDIT_RESULT_D, nullptr, nullptr);
+          230, 100, 140, 20, hwnd, (HMENU)IDC_EDIT_RESULT_D, nullptr, nullptr);
 
-      // === Корреляция ===
-      CreateWindowEx(0, L"STATIC", L"Корреляция:", WS_CHILD | WS_VISIBLE, 20,
-                     140, 180, 20, hwnd, (HMENU)IDC_STATIC_RESULT4, nullptr,
-                     nullptr);
-
+      // === Корреляция (r) ===
+      CreateWindowEx(0, L"STATIC", L"Корреляция (r):", WS_CHILD | WS_VISIBLE,
+                     20, 140, 200, 20, hwnd, (HMENU)IDC_STATIC_RESULT4,
+                     nullptr, nullptr);
       hEdR = CreateWindowEx(
           WS_EX_CLIENTEDGE, L"EDIT", L"", WS_CHILD | WS_VISIBLE | ES_READONLY,
-          220, 140, 140, 20, hwnd, (HMENU)IDC_EDIT_RESULT_R, nullptr, nullptr);
+          230, 140, 140, 20, hwnd, (HMENU)IDC_EDIT_RESULT_R, nullptr, nullptr);
+
+      // === Предэкспоненциальный коэффициент (A) ===
+      CreateWindowEx(0, L"STATIC", L"Предэксп. коэф. (A):",
+                     WS_CHILD | WS_VISIBLE, 20, 180, 200, 20, hwnd,
+                     (HMENU)IDC_STATIC_RESULT_A, nullptr, nullptr);
+      hEdA = CreateWindowEx(
+          WS_EX_CLIENTEDGE, L"EDIT", L"", WS_CHILD | WS_VISIBLE | ES_READONLY,
+          230, 180, 140, 20, hwnd, (HMENU)IDC_EDIT_RESULT_A, nullptr, nullptr);
+
+      // === Энергия активации (Ea) ===
+      CreateWindowEx(0, L"STATIC", L"Энергия активации (Ea):",
+                     WS_CHILD | WS_VISIBLE, 20, 220, 200, 20, hwnd,
+                     (HMENU)IDC_STATIC_RESULT_EA, nullptr, nullptr);
+      hEdEa = CreateWindowEx(
+          WS_EX_CLIENTEDGE, L"EDIT", L"", WS_CHILD | WS_VISIBLE | ES_READONLY,
+          230, 220, 140, 20, hwnd, (HMENU)IDC_EDIT_RESULT_EA, nullptr, nullptr);
 
       // === Кнопка OK ===
       CreateWindowEx(0, L"BUTTON", L"OK",
-                     WS_CHILD | WS_VISIBLE | BS_DEFPUSHBUTTON, 160, 200, 60, 25,
+                     WS_CHILD | WS_VISIBLE | BS_DEFPUSHBUTTON, 160, 260, 60, 25,
                      hwnd, (HMENU)IDC_BUTTON_OK, nullptr, nullptr);
+
       return 0;
     }
 
     case WM_COMMAND: {
       const int wmId = LOWORD(wParam);
-
-      // Если нажата кнопка "OK", закрываем окно
       if (wmId == IDC_BUTTON_OK) {
         DestroyWindow(hwnd);
       }
       return 0;
     }
-    
+
     case WM_CLOSE:
       DestroyWindow(hwnd);
       return 0;
 
-    // Если окно результатов уничтожается, сбрасываем глобальный дескриптор
     case WM_DESTROY:
       if (g_hResWnd == hwnd) {
         g_hResWnd = nullptr;
@@ -124,61 +128,62 @@ LRESULT CALLBACK ResultWindow::StaticWndProc(HWND hwnd, UINT msg, WPARAM wParam,
 /**
  * \brief Отображает окно результатов расчёта с заданными параметрами.
  *
- * Функция \c Show создаёт окно для отображения результатов расчёта, таких как
- * порядок реакции (n), константа скорости (k), дисперсия и коэффициент корреляции.
- * Если окно уже существует, функция активирует его.
- *
- * \param hwndParent Дескриптор родительского окна, относительно которого центрируется окно результатов.
- * \param n Рассчитанный порядок реакции.
- * \param k Рассчитанная константа скорости.
- * \param disp Рассчитанная дисперсия.
- * \param r Рассчитанный коэффициент корреляции.
+ * \param hParent Дескриптор родительского окна.
+ * \param n Порядок реакции.
+ * \param k Константа скорости.
+ * \param disp Дисперсия.
+ * \param r Коэффициент корреляции.
+ * \param A Предэкспоненциальный коэффициент.
+ * \param Ea Энергия активации (Дж/моль).
  */
-void ResultWindow::Show(HWND hwndParent, double n, double k, double disp,
-                        double r) {
-  // Если окно уже создано, просто активируем его и выходим
-  if (g_hResWnd) {
-    SetForegroundWindow(g_hResWnd);
-    return;
-  }
+void ResultWindow::Show(HWND hParent, double n, double k, double disp, double r,
+                        double A, double Ea) {
+  // Зарегистрируем класс окна, если нужно (примерно):
+  // (Можно сделать это в другом месте, главное, чтобы класс был зарегистрирован
+  // один раз)
+  WNDCLASS wc = {};
+  wc.lpfnWndProc = ResultWindow::StaticWndProc;
+  wc.hInstance = GetModuleHandle(nullptr);
+  wc.lpszClassName = L"ResultWindowClass";
+  wc.hbrBackground = (HBRUSH)(COLOR_3DFACE + 1);
+  RegisterClass(&wc);
 
-  HINSTANCE hInst = (HINSTANCE)GetModuleHandle(nullptr);
-  DWORD style = WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_VISIBLE;
-  DWORD exStyle = WS_EX_DLGMODALFRAME;
-  int w = 400;
-  int h = 300;
+  // Создаём окно результатов со стилями, запрещающими изменение размера
+  HWND hResultWnd = CreateWindowEx(
+      0, L"ResultWindowClass", L"Результаты расчёта",
+      (WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX) &
+          ~(WS_MAXIMIZEBOX | WS_THICKFRAME),
+      CW_USEDEFAULT, CW_USEDEFAULT, 420, 340, hParent, nullptr, wc.hInstance,
+      nullptr);
 
-  // Расположим окно результатов по центру родительского
-  RECT rcParent;
-  GetWindowRect(hwndParent, &rcParent);
-  int cx = (rcParent.left + rcParent.right) / 2 - w / 2;
-  int cy = (rcParent.top + rcParent.bottom) / 2 - h / 2;
+  if (!hResultWnd) return;
 
-  // Создаём окно
-  g_hResWnd =
-      CreateWindowEx(exStyle, CLASSNAME_RESULT, L"Результаты расчёта", style,
-                     cx, cy, w, h, hwndParent, nullptr, hInst, nullptr);
+  // Отображаем окно
+  ShowWindow(hResultWnd, SW_SHOW);
+  UpdateWindow(hResultWnd);
 
-  if (!g_hResWnd) {
-    MessageBox(hwndParent,
-               L"Не удалось создать окно результатов!\n"
-               L"(В реальном проекте используйте .rc)",
-               L"Ошибка", MB_ICONERROR);
-    return;
-  }
-
-  // После создания окна записываем результаты в поля (EDIT)
+  // Заполняем поля значениями с разумным форматом
   wchar_t buf[64];
 
-  swprintf_s(buf, L"%.4f", n);
-  SetDlgItemText(g_hResWnd, IDC_EDIT_RESULT_N, buf);
+  // n (обычно 1-2, 3 знака после запятой)
+  swprintf_s(buf, L"%.3f", n);
+  SetWindowText(GetDlgItem(hResultWnd, IDC_EDIT_RESULT_N), buf);
 
-  swprintf_s(buf, L"%.4f", k);
-  SetDlgItemText(g_hResWnd, IDC_EDIT_RESULT_K, buf);
+  // k, disp, A (очень разные масштабы) — используем %.4g
+  swprintf_s(buf, L"%.4g", k);
+  SetWindowText(GetDlgItem(hResultWnd, IDC_EDIT_RESULT_K), buf);
 
-  swprintf_s(buf, L"%.4f", disp);
-  SetDlgItemText(g_hResWnd, IDC_EDIT_RESULT_D, buf);
+  swprintf_s(buf, L"%.4g", disp);
+  SetWindowText(GetDlgItem(hResultWnd, IDC_EDIT_RESULT_D), buf);
 
-  swprintf_s(buf, L"%.4f", r);
-  SetDlgItemText(g_hResWnd, IDC_EDIT_RESULT_R, buf);
+  swprintf_s(buf, L"%.4g", A);
+  SetWindowText(GetDlgItem(hResultWnd, IDC_EDIT_RESULT_A), buf);
+
+  // r (всегда между -1 и 1, три знака после запятой)
+  swprintf_s(buf, L"%.3f", r);
+  SetWindowText(GetDlgItem(hResultWnd, IDC_EDIT_RESULT_R), buf);
+
+  // Ea (может быть в тысячах Дж/моль, две цифры после запятой)
+  swprintf_s(buf, L"%.2f", Ea);
+  SetWindowText(GetDlgItem(hResultWnd, IDC_EDIT_RESULT_EA), buf);
 }

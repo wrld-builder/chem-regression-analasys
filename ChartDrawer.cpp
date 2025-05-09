@@ -132,8 +132,8 @@ void DrawChart(HDC hdc, const RECT& rcClient, const std::vector<double>& Ca,
       for (int s = 0; s < subSteps; s++) {
         double rate = k * pow(Acur, n);
         Acur -= rate * dtSub;
-        Bcur += (7.0 / 3.0) * rate * dtSub;
-        Ccur += rate * dtSub;
+        Bcur += (7.0 / 3.0) * rate * dtSub;            // 7 / 3   (на одну единицу А приходится 7/3 B)
+        Ccur += rate * dtSub;                          // 1 / 1 == 1 (аналогично, 1/1 C на одну единицу А)
         tcur += dtSub;
 
         arrA.push_back({fx(tcur), fy(Acur)});

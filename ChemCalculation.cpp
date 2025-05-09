@@ -68,83 +68,124 @@ CalculationResult ChemCalculation::Calculate(const std::vector<double>& Ca,
   CalculationResult result = {0.0, 0.0, 0.0, 0.0};
   const int nPoints = static_cast<int>(Ca.size());
 
-  // Проверка входных данных: начальные концентрации не должны быть отрицательными.
+  // 1. Проверка входных данных
   if (Cb < 0.0 || Cc < 0.0) {
-    throw std::runtime_error("Начальные концентрации Cb и Cc не могут быть отрицательными!");
+    throw std::runtime_error(
+        "Начальные концентрации Cb и Cc не могут быть отрицательными!");
   }
-  // Проверка значений концентрации A
   for (size_t i = 0; i < Ca.size(); i++) {
-    if (Ca[i] < 0.0)
+    if (Ca[i] < 0.0) {
       throw std::runtime_error("Значение Ca не может быть отрицательным!");
+    }
   }
-  // Проверка, что значения времени строго возрастают
-  for (int i = 0; i < nPoints - 1; i++) {
-    if (Tm[i + 1] <= Tm[i])
-      throw std::runtime_error("Время должно строго возрастать (t[i+1] > t[i])!");
-  }
-  // Должно быть не менее двух точек для проведения расчёта
-  if (nPoints < 2)
+  if (nPoints < 2) {
     throw std::runtime_error("Недостаточно точек для расчёта!");
+  }
+  for (int i = 0; i < nPoints - 1; i++) {
+    if (Tm[i + 1] <= Tm[i]) {
+      throw std::runtime_error(
+          "Время должно строго возрастать (t[i+1] > t[i])!");
+    }
+  }
 
-  // Вычисление коэффициентов для регрессионного анализа.
-  // s1 - количество интервалов между точками.
+  // 2. Набор сумм для регрессионного анализа
   double s1 = static_cast<double>(nPoints - 1);
   double s2 = 0.0, s3 = 0.0, s4 = 0.0, s5 = 0.0, s6 = 0.0;
+
   for (int i = 0; i < nPoints - 1; i++) {
     double dC = Ca[i + 1] - Ca[i];
     double dt = Tm[i + 1] - Tm[i];
-    // Предотвращаем деление на очень малое число
-    if (dt <= 1e-15)
-      dt = 1e-15;
-    // Вычисляем абсолютное значение скорости изменения концентрации
-    double w = fabs(dC / dt);
-    // Используем защиту от слишком малых значений концентрации
+    // Защита от слишком маленького dt
+    if (dt <= 1e-15) dt = 1e-15;
+
+    // Вычисляем скорость
+    double w = std::fabs(dC / dt);
+    // Защита от w=0 => log(0) = -inf
+    if (w < 1e-15) {
+      w = 1e-15;
+    }
+
+    // Логарифмируем концентрацию (защита от нуля)
     double cVal = (Ca[i] < 1e-15) ? 1e-15 : Ca[i];
-    double y = log(w);
-    double x = log(cVal);
+    double x = std::log(cVal);
+    double y = std::log(w);
+
     s2 += x;
     s3 += y;
     s4 += x * x;
     s5 += x * y;
     s6 += y * y;
   }
-  // Вычисление знаменателя для регрессионного уравнения
+
+  // 3. Вычисление порядка реакции (n) и ln(k) по формуле линейной регрессии
   double denom = (s1 * s4 - s2 * s2);
-  if (fabs(denom) < 1e-15)
-    throw std::runtime_error("Невозможно вычислить (деление на ноль). Проверьте данные!");
+  if (std::fabs(denom) < 1e-15) {
+    throw std::runtime_error(
+        "Невозможно вычислить параметры (деление на ноль). Проверьте данные!");
+  }
 
-  // Расчёт порядка реакции n и временной компоненты для определения константы скорости k.
-  result.n = (s1 * s5 - s2 * s3) / denom;
-  double t_k = (s3 * s4 - s2 * s5) / denom;
-  result.k = exp(t_k);
+  result.n = (s1 * s5 - s2 * s3) / denom;    // slope
+  double t_k = (s3 * s4 - s2 * s5) / denom;  // intercept
+  result.k = std::exp(t_k);  // константа скорости
 
-  // Расчёт коэффициента корреляции
-  double denom_r = sqrt((s1 * s4 - s2 * s2) * (s1 * s6 - s3 * s3));
-  if (denom_r < 1e-15)
-    denom_r = 1e-15;
-  result.r = (s1 * s5 - s2 * s3) / denom_r;
+  // 4. Расчёт коэффициента корреляции r
+  double denom_r_val = (s1 * s4 - s2 * s2) * (s1 * s6 - s3 * s3);
+  if (denom_r_val < 1e-15) {
+    // Данные вырождены (скорее всего все y одинаковы) -> r не определён
+    result.r = 0.0;
+  } else {
+    double denom_r = std::sqrt(denom_r_val);
+    result.r = (s1 * s5 - s2 * s3) / denom_r;
+    // Зажать в диапазон [-1..1] на случай неточностей
+    if (result.r > 1.0) result.r = 1.0;
+    if (result.r < -1.0) result.r = -1.0;
+  }
 
-  // Вычисление дисперсии методом интегрирования с использованием подшагов.
+  // 5. Вычисление дисперсии методом пошагового интегрирования
   double sumSq = 0.0;
   double Acur = Ca[0];
   double tcur = Tm[0];
+
   for (int i = 1; i < nPoints; i++) {
     double dtFull = Tm[i] - tcur;
-    const int subSteps = 20;  // Количество подшагов интегрирования
+    if (dtFull < 1e-15) {
+      dtFull = 1e-15;  // защита
+    }
+    const int subSteps = 70;  // Количество подшагов
     double dtSub = dtFull / subSteps;
     double Atemp = Acur;
-    // Интегрирование для моделирования изменения концентрации A
+
     for (int s = 0; s < subSteps; s++) {
-      double rate = result.k * pow(Atemp, result.n);
+      // rate = k * A^n
+      // Если Atemp < 0, то pow(Atemp, n) даст NaN при n < 1
+      if (Atemp < 1e-15) {
+        Atemp = 0.0;  // «зажимаем» отрицательные/слишком малые значения
+      }
+      double rate = result.k * std::pow(Atemp, result.n);
       Atemp -= rate * dtSub;
+      if (Atemp < 0.0) {
+        Atemp = 0.0;  // не даём уйти в минус
+      }
     }
-    // Разница между экспериментальным и смоделированным значением концентрации A
+
     double diff = Ca[i] - Atemp;
-    sumSq += diff * diff;
+    // Округляем, чтобы уменьшить накопление ошибок double
+    sumSq += std::round(diff * diff * 1e4) / 1e4;
+
     Acur = Atemp;
     tcur = Tm[i];
   }
+  // Делим на (nPoints - 1) если nPoints > 1 (мы проверили выше)
   result.disp = sumSq / (nPoints - 1);
+
+  // 6. Дополнительная проверка на NaN/inf
+  // В C++17 можно использовать std::isfinite,
+  // в MSVC до C++17 можно _finite(...) и т.п.
+  if (!std::isfinite(result.n) || !std::isfinite(result.k) ||
+      !std::isfinite(result.r) || !std::isfinite(result.disp)) {
+    throw std::runtime_error(
+        "Вычисленные параметры содержат NaN/inf! Проверьте данные.");
+  }
 
   return result;
 }

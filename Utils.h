@@ -13,6 +13,7 @@
 #define UTILS_H
 
 #include <windows.h>
+#include <string>
 
 /**
  * \brief Преобразует текст из элемента управления EDIT в значение типа double.
@@ -35,5 +36,21 @@ double GetEditDouble(HWND hEdit);
  * \param msg Текст сообщения об ошибке.
  */
 void ShowError(HWND hwndParent, const wchar_t* msg);
+
+/**
+ * @brief Преобразует строку std::string в std::wstring.
+ *
+ * Функция выполняет конвертацию строки из ANSI-кодировки (используемой по
+ * умолчанию CP_ACP) в широкую строку (std::wstring) с помощью Windows API
+ * функции MultiByteToWideChar.
+ *
+ * Если входная строка пустая или при вычислении требуемого размера возникает
+ * ошибка, функция возвращает пустую std::wstring.
+ *
+ * @param str Входная строка в формате std::string.
+ * @return std::wstring Преобразованная строка в формате std::wstring. При
+ * ошибке возвращается пустая строка.
+ */
+std::wstring s2ws(const std::string& str);
 
 #endif  // UTILS_H

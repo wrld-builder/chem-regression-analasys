@@ -222,91 +222,97 @@ LRESULT MainWindow::WndProc(UINT msg, WPARAM wParam, LPARAM lParam) {
 void MainWindow::CreateChildControls() {
   // Текст с описанием реакции
   CreateWindowEx(0, L"STATIC", L"Реакция: 3A = 7B + 3C\nСкорость: W = k * Ca^n",
-                 WS_CHILD | WS_VISIBLE | SS_LEFT,
-                 20, 10, 160, 40, m_hWnd,
+                 WS_CHILD | WS_VISIBLE | SS_LEFT, 20, 10, 160, 40, m_hWnd,
                  nullptr, nullptr, nullptr);
 
   // Надпись "Количество точек"
   CreateWindowEx(0, L"STATIC", L"Количество точек",
-                 WS_CHILD | WS_VISIBLE | SS_LEFT,
-                 20, 60, 120, 20, m_hWnd,
+                 WS_CHILD | WS_VISIBLE | SS_LEFT, 20, 60, 120, 20, m_hWnd,
                  nullptr, nullptr, nullptr);
 
   // Поле для ввода количества точек
   m_hPointsEdit = CreateWindowEx(
-      WS_EX_CLIENTEDGE, L"EDIT", L"5",
-      WS_CHILD | WS_VISIBLE | ES_NUMBER,
-      140, 60, 50, 20, m_hWnd,
-      (HMENU)IDC_POINTS_EDIT, nullptr, nullptr);
+      WS_EX_CLIENTEDGE, L"EDIT", L"5", WS_CHILD | WS_VISIBLE | ES_NUMBER, 140,
+      60, 50, 20, m_hWnd, (HMENU) static_cast<INT_PTR> (IDC_POINTS_EDIT), nullptr,
+      nullptr);
 
   // Надпись "Cb:"
-  CreateWindowEx(0, L"STATIC", L"Cb:",
-                 WS_CHILD | WS_VISIBLE | SS_LEFT,
-                 20, 90, 30, 20, m_hWnd,
-                 nullptr, nullptr, nullptr);
+  CreateWindowEx(0, L"STATIC", L"Cb:", WS_CHILD | WS_VISIBLE | SS_LEFT, 20, 90,
+                 30, 20, m_hWnd, nullptr, nullptr, nullptr);
 
   // Поле для ввода Cb
   m_hCbEdit = CreateWindowEx(WS_EX_CLIENTEDGE, L"EDIT", L"0.1",
-                             WS_CHILD | WS_VISIBLE | ES_LEFT,
-                             60, 90, 60, 20, m_hWnd,
-                             (HMENU)IDC_CONC_CB_EDIT, nullptr, nullptr);
+                     WS_CHILD | WS_VISIBLE | ES_LEFT | ES_NUMBER, 60, 90, 60,
+                     20, m_hWnd, (HMENU)IDC_CONC_CB_EDIT,
+      nullptr, nullptr);
 
   // Надпись "Cc:"
-  CreateWindowEx(0, L"STATIC", L"Cc:",
-                 WS_CHILD | WS_VISIBLE | SS_LEFT,
-                 140, 90, 30, 20, m_hWnd,
-                 nullptr, nullptr, nullptr);
+  CreateWindowEx(0, L"STATIC", L"Cc:", WS_CHILD | WS_VISIBLE | SS_LEFT, 140, 90,
+                 30, 20, m_hWnd, nullptr, nullptr, nullptr);
 
   // Поле для ввода Cc
   m_hCcEdit = CreateWindowEx(WS_EX_CLIENTEDGE, L"EDIT", L"0.7",
-                             WS_CHILD | WS_VISIBLE | ES_LEFT,
-                             180, 90, 60, 20, m_hWnd,
-                             (HMENU)IDC_CONC_CC_EDIT, nullptr, nullptr);
+                     WS_CHILD | WS_VISIBLE | ES_LEFT | ES_NUMBER, 180, 90, 60,
+                     20, m_hWnd, (HMENU)IDC_CONC_CC_EDIT,
+      nullptr, nullptr);
 
-  // Кнопка "Графики"
-  CreateWindowEx(0, L"BUTTON", L"Графики",
-                 WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
-                 20, 130, 100, 30, m_hWnd,
-                 (HMENU)IDC_BUTTON_GRAPH, nullptr, nullptr);
+  // Кнопка "Расчет"
+  CreateWindowEx(0, L"BUTTON", L"Расчет",
+                 WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON, 20, 130, 100, 30, m_hWnd,
+                 (HMENU) static_cast<INT_PTR>(IDC_BUTTON_GRAPH), nullptr,
+                 nullptr);
 
   // Кнопка "Выход"
-  CreateWindowEx(0, L"BUTTON", L"Выход",
-                 WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
+  CreateWindowEx(0, L"BUTTON", L"Выход", WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
                  140, 130, 100, 30, m_hWnd,
-                 (HMENU)IDC_BUTTON_EXIT, nullptr, nullptr);
+                 (HMENU) static_cast<INT_PTR> (IDC_BUTTON_EXIT), nullptr,
+                 nullptr);
 
-  // Метка для отображения координат (новая)
-  m_hCoordLabel = CreateWindowEx(
-      0, L"STATIC", L"", WS_CHILD | WS_VISIBLE | SS_LEFT,
-      460, 10, 200, 20, m_hWnd,
-      nullptr, nullptr, nullptr);
+  // Метка для отображения координат
+  m_hCoordLabel =
+      CreateWindowEx(0, L"STATIC", L"", WS_CHILD | WS_VISIBLE | SS_LEFT, 460,
+                     10, 200, 20, m_hWnd, nullptr, nullptr, nullptr);
 
-  // Создаём поля для ввода экспериментальных значений Ca и t
-  int startY = 180;
+  // -------------------------
+  // Поля ввода (Ca, t) + подписи
+  // -------------------------
+  int startY = 180;    // Откуда начинаем размещать
+  int rowHeight = 25;  // Расстояние между строками
   double defaultCa[5] = {2.0, 1.8, 1.6, 1.4, 1.2};
   double defaultT[5] = {0.0, 1.0, 2.0, 3.0, 4.0};
 
+  // Подпись для столбца «Ca»
+  CreateWindowEx(0, L"STATIC", L"Ca, моль/л", WS_CHILD | WS_VISIBLE | SS_CENTER, 0,
+                 startY, 100, 20, m_hWnd, nullptr, nullptr, nullptr);
+
+  // Подпись для столбца «t»
+  CreateWindowEx(0, L"STATIC", L"t, с", WS_CHILD | WS_VISIBLE | SS_CENTER, 90,
+                 startY, 60, 20, m_hWnd, nullptr, nullptr, nullptr);
+
+  // Создаём поля ввода в цикле
   for (int i = 0; i < MAX_POINTS; i++) {
-    // Создание поля для Ca
+    int fieldY = startY + i * rowHeight + 20;
+
+    // Поле для Ca
     m_EditsCa[i] = CreateWindowEx(
         WS_EX_CLIENTEDGE, L"EDIT", L"",
-        WS_CHILD | WS_VISIBLE | ES_LEFT,
-        20, startY + i * 25, 60, 20,
-        m_hWnd, (HMENU)(IDC_BASE_CA + i), nullptr, nullptr);
+        WS_CHILD | WS_VISIBLE | ES_LEFT | ES_NUMBER, 20,
+        fieldY, 60, 20, m_hWnd, (HMENU) static_cast<INT_PTR>(IDC_BASE_CA + i),
+        nullptr, nullptr);
 
-    // Создание поля для t
+    // Поле для t
     m_EditsTm[i] = CreateWindowEx(
         WS_EX_CLIENTEDGE, L"EDIT", L"",
-        WS_CHILD | WS_VISIBLE | ES_LEFT,
-        90, startY + i * 25, 60, 20,
-        m_hWnd, (HMENU)(IDC_BASE_T + i), nullptr, nullptr);
+        WS_CHILD | WS_VISIBLE | ES_LEFT | ES_NUMBER, 90,
+        fieldY, 60, 20, m_hWnd, (HMENU) static_cast<INT_PTR>(IDC_BASE_T + i),
+        nullptr, nullptr);
 
-    // Показываем или скрываем поля в зависимости от m_nPoints
+    // Отображаем/скрываем в зависимости от m_nPoints
     if (i < m_nPoints) {
       ShowWindow(m_EditsCa[i], SW_SHOW);
       ShowWindow(m_EditsTm[i], SW_SHOW);
 
-      // Если для первых 5 точек заданы дефолтные значения, устанавливаем их
+      // Дефолтные значения (для первых 5)
       if (i < 5) {
         wchar_t buf[32];
         swprintf_s(buf, L"%.1f", defaultCa[i]);
@@ -316,14 +322,12 @@ void MainWindow::CreateChildControls() {
         SetWindowText(m_EditsTm[i], buf);
       }
     } else {
-      // Если i >= m_nPoints, прячем поля ввода
       ShowWindow(m_EditsCa[i], SW_HIDE);
       ShowWindow(m_EditsTm[i], SW_HIDE);
     }
   }
 
-  // Завершаем инициализацию дочерних элементов
-  this->m_initializing = false;
+  m_initializing = false;
 }
 
 /**
@@ -338,7 +342,7 @@ void MainWindow::CreateChildControls() {
  * \param wParam Содержит идентификатор команды и информацию о событии.
  * \param lParam Дополнительная информация о сообщении (не используется).
  */
-void MainWindow::OnCommand(WPARAM wParam, LPARAM lParam) {
+void MainWindow::OnCommand(WPARAM wParam, LPARAM) {
   int wmId = LOWORD(wParam);
   int wmEvent = HIWORD(wParam);
 
@@ -386,7 +390,7 @@ void MainWindow::OnCommand(WPARAM wParam, LPARAM lParam) {
  * \param wParam Содержит информацию о кнопках мыши (не используется).
  * \param lParam Содержит координаты курсора в клиентских координатах.
  */
-void MainWindow::OnMouseMove(WPARAM wParam, LPARAM lParam) {
+void MainWindow::OnMouseMove(WPARAM, LPARAM lParam) {
   int xPos = GET_X_LPARAM(lParam);
   int yPos = GET_Y_LPARAM(lParam);
 
@@ -505,23 +509,66 @@ void MainWindow::OnCalculateAndRedraw() {
     Tm.push_back(GetEditDouble(m_EditsTm[i]));
   }
 
-  // Выполняем расчёт через класс ChemCalculation
+  // Выполняем расчёт через класс ChemCalculation (n, k, r, disp)
+  CalculationResult res;
   try {
-    CalculationResult res = ChemCalculation::Calculate(Ca, Tm, m_Cb, m_Cc);
+    res = ChemCalculation::Calculate(Ca, Tm, m_Cb, m_Cc);
     m_n = res.n;
     m_k = res.k;
     m_r = res.r;
     m_disp = res.disp;
   } catch (const std::runtime_error& e) {
     std::wstringstream ws;
-    ws << L"Ошибка расчёта:\n" << e.what();
+    ws << L"Ошибка расчёта:\n" << s2ws(e.what());            // конвертация в RU текст без проблем с кодировкой
     ShowError(m_hWnd, ws.str().c_str());
     return;
   }
 
+  // Дополнительный расчёт по уравнению Аррениуса:
+  // Для каждого интервала вычисляем мгновенную константу k_i и среднюю
+  // температуру.
+  std::vector<double> lnK;
+  std::vector<double> invT;
+  // Если эксперимент проведён при разных температурах (Tm в Кельвинах)
+  for (int i = 0; i < m_nPoints - 1; i++) {
+    double dt = Tm[i + 1] - Tm[i];
+    double dCa = Ca[i + 1] - Ca[i];
+    if (dt <= 1e-15) dt = 1e-15;
+    double w = std::fabs(dCa / dt);
+    // Вычисляем мгновенную константу: k_i = w / (Ca[i]^n)
+    double k_i = w / std::pow(Ca[i], m_n);
+    double T_avg = (Tm[i] + Tm[i + 1]) / 2.0;
+    lnK.push_back(std::log(k_i));
+    invT.push_back(1.0 / T_avg);
+  }
+
+  // Линейная регрессия для нахождения коэффициентов ln(k) = ln(A) - Ea/(R*T)
+  double sumX = 0.0, sumY = 0.0, sumXX = 0.0, sumXY = 0.0;
+  int N = static_cast<int>(lnK.size());
+  if (N < 2) {
+    // Недостаточно данных для регрессии Аррениуса
+    ShowError(m_hWnd,
+              L"Недостаточно экспериментальных данных для расчёта уравнения "
+              L"Аррениуса!");
+    return;
+  }
+  for (int i = 0; i < N; i++) {
+    sumX += invT[i];
+    sumY += lnK[i];
+    sumXX += invT[i] * invT[i];
+    sumXY += invT[i] * lnK[i];
+  }
+  double slope = (N * sumXY - sumX * sumY) / (N * sumXX - sumX * sumX);
+  double intercept = (sumY - slope * sumX) / N;
+  const double R_gas = 8.314;  // Дж/(моль·К)
+  double Ea = -slope * R_gas;  // энергия активации (Дж/моль)
+  double A = std::exp(intercept);  // предэкспоненциальный коэффициент
+
   // Обновляем окно (перерисовка графика)
   InvalidateRect(m_hWnd, nullptr, TRUE);
 
-  // Отображаем окно результатов с вычисленными параметрами
-  ResultWindow::Show(m_hWnd, m_n, m_k, m_disp, m_r);
+  // Отображаем окно результатов с вычисленными параметрами, включая A и Ea.
+  // Предполагается, что функция ResultWindow::Show расширена для отображения
+  // этих параметров.
+  ResultWindow::Show(m_hWnd, m_n, m_k, m_disp, m_r, A, Ea);
 }
